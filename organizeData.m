@@ -70,6 +70,9 @@ function organizeData(varargin)
         time_mocap = pos_time;
         sampling_rate_mocap = median(diff(time_mocap));
         marker_labels = pos_labels;
+        if iscolumn(marker_labels)
+            marker_labels = marker_labels';
+        end
         
         % filter
         if study_settings.get('filter_marker_data')

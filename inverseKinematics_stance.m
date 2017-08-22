@@ -66,26 +66,30 @@ function inverseKinematics_stance(varargin)
     RANK_reference = extractMarkerTrajectories(marker_reference, marker_labels, 'R_ankle')';
     
     % calculate segment angles for reference
-    ankle_cor = mean([LANK_reference RANK_reference], 2);
-    knee_cor = mean([LKNE_reference RKNE_reference], 2);
-    hip_cor = mean([LGT_reference RGT_reference], 2);
-    lumbar_cor = mean([LIC_reference RIC_reference], 2);
-    shoulders_mid = mean([LSHO_reference RSHO_reference], 2);
-    ears_mid = mean([LEAR_reference REAR_reference], 2);
+    ankle_reference = mean([LANK_reference RANK_reference], 2);
+    knee_reference = mean([LKNE_reference RKNE_reference], 2);
+    hip_reference = mean([LGT_reference RGT_reference], 2);
+    lumbar_reference = mean([LIC_reference RIC_reference], 2);
+    neck_reference = mean([LSHO_reference RSHO_reference], 2);
+    head_reference = mean([LEAR_reference REAR_reference], 2);
     
-    lower_leg_vector = knee_cor - ankle_cor;
-    thigh_vector = hip_cor - knee_cor;
-    pelvis_vector = lumbar_cor - hip_cor;
-    trunk_vector = shoulders_mid - lumbar_cor;
-    head_vector = ears_mid - shoulders_mid;
+    lower_leg_vector_reference = knee_reference - ankle_reference;
+    thigh_vector_reference = hip_reference - knee_reference;
+    pelvis_vector_reference = lumbar_reference - hip_reference;
+    trunk_vector_reference = neck_reference - lumbar_reference;
+    head_vector_reference = head_reference - neck_reference;
     
-    lower_leg_segment_angle_reference = atan2(lower_leg_vector(3), lower_leg_vector(1));
-    thigh_segment_angle_reference = atan2(thigh_vector(3), thigh_vector(1));
-    pelvis_segment_angle_reference = atan2(pelvis_vector(3), pelvis_vector(1));
-    trunk_segment_angle_reference = atan2(trunk_vector(3), trunk_vector(1));
-    head_segment_angle_reference = atan2(head_vector(3), head_vector(1));
+    lower_leg_segment_angle_reference = atan2(lower_leg_vector_reference(3), -lower_leg_vector_reference(1));
+    thigh_segment_angle_reference = atan2(thigh_vector_reference(3), -thigh_vector_reference(1));
+    pelvis_segment_angle_reference = atan2(pelvis_vector_reference(3), -pelvis_vector_reference(1));
+    trunk_segment_angle_reference = atan2(trunk_vector_reference(3), -trunk_vector_reference(1));
+    head_segment_angle_reference = atan2(head_vector_reference(3), -head_vector_reference(1));
     
-    
+    lower_leg_length = norm(lower_leg_vector_reference);
+    thigh_length = norm(thigh_vector_reference);
+    pelvis_length = norm(pelvis_vector_reference);
+    trunk_length = norm(trunk_vector_reference);
+    head_length = norm(head_vector_reference);
     
     if use_parallel
         % get or open pool of workers
@@ -106,7 +110,7 @@ function inverseKinematics_stance(varargin)
             
             % load data
             load(['processed' filesep makeFileName(date, subject_id, condition, i_trial, 'markerTrajectories')]);
-            number_of_time_steps = size(marker_trajectories, 1); %#ok<NODEF>
+            number_of_time_steps = size(marker_trajectories, 1);
             time_steps_to_process = 1 : number_of_time_steps;
 %             time_steps_to_process = 29999 : 30000;
             number_of_time_steps_to_process = length(time_steps_to_process);
@@ -160,11 +164,11 @@ function inverseKinematics_stance(varargin)
             trunk_vector = shoulders_mid - lumbar_cor;
             head_vector = ears_mid - shoulders_mid;
 
-            lower_leg_segment_angle_position = atan2(lower_leg_vector(:, 3), lower_leg_vector(:, 1));
-            thigh_segment_angle_position = atan2(thigh_vector(:, 3), thigh_vector(:, 1));
-            pelvis_segment_angle_position = atan2(pelvis_vector(:, 3), pelvis_vector(:, 1));
-            trunk_segment_angle_position = atan2(trunk_vector(:, 3), trunk_vector(:, 1));
-            head_segment_angle_position = atan2(head_vector(:, 3), head_vector(:, 1));
+            lower_leg_segment_angle_position = atan2(lower_leg_vector(:, 3), -lower_leg_vector(:, 1));
+            thigh_segment_angle_position = atan2(thigh_vector(:, 3), -thigh_vector(:, 1));
+            pelvis_segment_angle_position = atan2(pelvis_vector(:, 3), -pelvis_vector(:, 1));
+            trunk_segment_angle_position = atan2(trunk_vector(:, 3), -trunk_vector(:, 1));
+            head_segment_angle_position = atan2(head_vector(:, 3), -head_vector(:, 1));
 
             lower_leg_segment_angle_change = lower_leg_segment_angle_position - lower_leg_segment_angle_reference;
             thigh_segment_angle_change = thigh_segment_angle_position - thigh_segment_angle_reference;
@@ -174,13 +178,13 @@ function inverseKinematics_stance(varargin)
 
             ankle_joint_angle = lower_leg_segment_angle_change;
             knee_joint_angle = thigh_segment_angle_change - lower_leg_segment_angle_change;
-            hip_joint_angle = pelvis_segment_angle_change - thigh_segment_angle_change - lower_leg_segment_angle_change;
-            lumbar_joint_angle = trunk_segment_angle_change - pelvis_segment_angle_change - thigh_segment_angle_change - lower_leg_segment_angle_change;
-            neck_joint_angle = head_segment_angle_change - trunk_segment_angle_change - pelvis_segment_angle_change - thigh_segment_angle_change - lower_leg_segment_angle_change;
-
+            hip_joint_angle = pelvis_segment_angle_change - thigh_segment_angle_change;
+            lumbar_joint_angle = trunk_segment_angle_change - pelvis_segment_angle_change;
+            neck_joint_angle = head_segment_angle_change - trunk_segment_angle_change;
+            
             joint_center_trajectories = [ankle_cor knee_cor hip_cor lumbar_cor shoulders_mid];
             joint_angle_trajectories = [ankle_joint_angle knee_joint_angle hip_joint_angle lumbar_joint_angle neck_joint_angle];
-
+            
 
 %             % calculate segment centers of mass
 %             segment_coms_wcs_reference = segment_coms_wcs;
@@ -238,7 +242,7 @@ function inverseKinematics_stance(varargin)
             variables_to_save.joint_center_trajectories = joint_center_trajectories;
             variables_to_save.joint_center_labels = joint_center_labels;
             variables_to_save.joint_angle_trajectories = joint_angle_trajectories;
-%             variables_to_save.joint_labels = ...
+            variables_to_save.joint_labels = kinematic_tree.jointLabels;
             variables_to_save.com_trajectories = com_trajectories;
             variables_to_save.com_labels = com_labels;
             variables_to_save.time_mocap = time_mocap;
