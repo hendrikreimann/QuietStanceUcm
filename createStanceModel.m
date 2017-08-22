@@ -80,6 +80,8 @@ function createStanceModel(varargin)
     % pelvis
     LASI_reference = extractMarkerTrajectories(marker_reference, marker_labels, 'L_asis')';
     RASI_reference = extractMarkerTrajectories(marker_reference, marker_labels, 'R_asis')';
+    LIC_reference = extractMarkerTrajectories(marker_reference, marker_labels, 'L_ic')';
+    RIC_reference = extractMarkerTrajectories(marker_reference, marker_labels, 'R_ic')';
 
     % left leg
     LGT_reference = extractMarkerTrajectories(marker_reference, marker_labels, 'L_gt')';
@@ -132,7 +134,7 @@ function createStanceModel(varargin)
         error('Gender must be either male or female');
     end
     pelvis_acs_origin = mean([LASI_reference RASI_reference], 2);
-    lumbar_cor = pelvis_acs_origin + ljc_correction_factor_frontal*posterior_direction*inter_ASIS_distance + ljc_correction_factor_vertical*proximal_direction*inter_ASIS_distance;
+    lumbar_cor = mean([LIC_reference RIC_reference], 2);
 
     knee_flexion_axis = right_direction;
     hip_flexion_axis = left_direction;

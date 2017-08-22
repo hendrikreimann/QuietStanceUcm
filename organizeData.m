@@ -24,6 +24,19 @@ function organizeData(varargin)
     if ~exist('processed', 'dir')
         mkdir('processed')
     end
+    if ~exist('analysis', 'dir')
+        mkdir('analysis')
+    end
+    
+    % load settings
+    study_settings_file = '';
+    if exist(['..' filesep 'studySettings.txt'], 'file')
+        study_settings_file = ['..' filesep 'studySettings.txt'];
+    end    
+    if exist(['..' filesep '..' filesep 'studySettings.txt'], 'file')
+        study_settings_file = ['..' filesep '..' filesep 'studySettings.txt'];
+    end
+    study_settings = SettingsCustodian(study_settings_file);
     
     % get list of files to reorganize
     clear file_name_list;
@@ -58,6 +71,15 @@ function organizeData(varargin)
         sampling_rate_mocap = median(diff(time_mocap));
         marker_labels = pos_labels;
         
+        % filter
+        if study_settings.get('filter_marker_data')
+            filter_order = study_settings.get('marker_data_filter_order');
+            cutoff_frequency = study_settings.get('marker_data_cutoff_frequency'); % in Hz
+            [b_marker, a_marker] = butter(filter_order, cutoff_frequency/(sampling_rate_mocap/2));
+            marker_trajectories = nanfiltfilt(b_marker, a_marker, marker_trajectories);
+        end
+
+        
         save_folder = 'processed';
         save_file_name = makeFileName(date, subject_id, trial_type, trial_number, 'markerTrajectories.mat');
         save ...
@@ -68,7 +90,8 @@ function organizeData(varargin)
             'sampling_rate_mocap', ...
             'marker_labels' ...
           );
-      
+        addAvailableData('marker_trajectories', 'time_mocap', 'sampling_rate_mocap', 'marker_labels', save_folder, save_file_name);
+
         
     end
 
