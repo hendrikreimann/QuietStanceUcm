@@ -205,6 +205,19 @@ function plotUcmResults(varargin)
                 % get data
                 V_para_to_plot_this_condition = V_para_to_plot(:, this_condition_indicator);
                 V_perp_to_plot_this_condition = V_perp_to_plot(:, this_condition_indicator);
+                if strcmp(plot_settings.get('data_transformation'), 'log')
+                    V_para_to_plot_this_condition = log(V_para_to_plot_this_condition')';
+                    V_perp_to_plot_this_condition = log(V_perp_to_plot_this_condition')';
+                end
+                if strcmp(plot_settings.get('data_transformation'), 'box-cox')
+                    V_para_to_plot_this_condition = boxcox(V_para_to_plot_this_condition')';
+                    V_perp_to_plot_this_condition = boxcox(V_perp_to_plot_this_condition')';
+                end
+%                 figure; histogram(V_para_to_plot_this_condition);
+%                 figure; histogram(V_perp_to_plot_this_condition);
+%                 figure; histogram(V_para_to_plot_this_condition_BC);
+%                 figure; histogram(V_perp_to_plot_this_condition_BC);
+                
                 target_abscissa = abscissae_cell{i_comparison, i_variable};
                 
                 % plot
